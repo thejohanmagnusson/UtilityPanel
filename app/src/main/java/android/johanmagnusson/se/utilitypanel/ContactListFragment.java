@@ -10,9 +10,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
@@ -27,7 +25,7 @@ public class ContactListFragment extends Fragment {
     private OnContactSelectedListener mListener;
     private DatabaseReference mDatabase;
 
-    private FirebaseRecyclerAdapter<Contact, ContactViewHolder> mAdapter;
+    private MyFirebaseRecyclerAdapter<Contact, ContactViewHolder> mAdapter;
     private MyRecyclerView mRecyclerView;
     private LinearLayoutManager mManager;
 
@@ -63,8 +61,6 @@ public class ContactListFragment extends Fragment {
                 final DatabaseReference ref = getRef(position);
 
                 viewHolder.bindToModel(model);
-
-                Toast.makeText(getContext(), "Populate contact", Toast.LENGTH_SHORT).show();
 
                 // Item click listener
                 final String contactKey = ref.getKey();

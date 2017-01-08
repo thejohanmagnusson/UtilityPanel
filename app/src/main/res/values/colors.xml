@@ -10,6 +10,7 @@
     <color name="colorPrimary">#2196F3</color>
     <color name="colorPrimaryLight">#BBDEFB</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="colorAccentAlt">#FF80AB</color>
 
     <color name="colorPrimaryText">#212121</color>
     <color name="colorSecondaryText">#727272</color>
