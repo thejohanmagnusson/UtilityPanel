@@ -1,16 +1,16 @@
 package android.johanmagnusson.se.utilitypanel;
 
+import android.content.Intent;
+import android.johanmagnusson.se.utilitypanel.model.Contact;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity
-                          implements ContactListFragment.OnContactSelectedListener{
+                          implements ContactListFragment.OnContactSelectedListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -24,7 +24,6 @@ public class MainActivity extends AppCompatActivity
 
         if(savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, new ContactListFragment(), ContactListFragment.TAG).commit();
-            Log.d(TAG, "------ Added contact fragment");
         }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -61,7 +60,11 @@ public class MainActivity extends AppCompatActivity
 
     // ContactListFragment.OnContactSelectedListener
     @Override
-    public void onContactSelected(String contactKey) {
-        Toast.makeText(this, "Contact selected", Toast.LENGTH_SHORT).show();
+    public void onContactSelected(Contact contact) {
+        Intent intent = new Intent(this, CallActivity.class);
+        intent.putExtra(CallActivity.CONTACT_NAME_KEY, contact.getName());
+        intent.putExtra(CallActivity.CONTACT_NUMBER_KEY, contact.getPhone());
+
+        startActivity(intent);
     }
 }

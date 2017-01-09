@@ -17,7 +17,7 @@ import com.google.firebase.database.Query;
 
 public class ContactListFragment extends Fragment {
     public interface OnContactSelectedListener {
-        void onContactSelected(String contactKey);
+        void onContactSelected(Contact contact);
     }
 
     public static final String TAG = ContactListFragment.class.getSimpleName();
@@ -63,11 +63,10 @@ public class ContactListFragment extends Fragment {
                 viewHolder.bindToModel(model);
 
                 // Item click listener
-                final String contactKey = ref.getKey();
                 viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        mListener.onContactSelected(contactKey);
+                        mListener.onContactSelected(model);
                     }
                 });
             }
