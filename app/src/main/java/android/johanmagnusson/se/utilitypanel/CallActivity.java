@@ -2,16 +2,13 @@ package android.johanmagnusson.se.utilitypanel;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.Toast;
+
+import static android.johanmagnusson.se.utilitypanel.CallFragment.ARG_CONTACT_NAME;
+import static android.johanmagnusson.se.utilitypanel.CallFragment.ARG_CONTACT_NUMBER;
 
 public class CallActivity extends AppCompatActivity {
 
     public final static String TAG = CallActivity.class.getSimpleName();
-    public final static String CONTACT_NAME_KEY = "contact-name";
-    public final static String CONTACT_NUMBER_KEY = "contact-number";
-
-    private String mContactName;
-    private String mContactNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,10 +17,13 @@ public class CallActivity extends AppCompatActivity {
         setContentView(R.layout.activity_call);
 
         if(savedInstanceState == null) {
-            mContactName = getIntent().getStringExtra(CONTACT_NAME_KEY);
-            mContactNumber = getIntent().getStringExtra(CONTACT_NUMBER_KEY);
+            String contactName = getIntent().getStringExtra(ARG_CONTACT_NAME);
+            String contactNumber = getIntent().getStringExtra(ARG_CONTACT_NUMBER);
+
+            CallFragment callFragment = CallFragment.newInstance(contactName, contactNumber);
+            getSupportFragmentManager().beginTransaction().add(R.id.call_container, callFragment).commit();
         }
 
-        Toast.makeText(this, "Calling: " + mContactName + ", " + mContactNumber, Toast.LENGTH_LONG).show();
+        getSupportActionBar().setElevation(0f);
     }
 }

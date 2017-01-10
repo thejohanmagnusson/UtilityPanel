@@ -28,7 +28,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".CallActivity"></activity>
+
+        <service
+            android:name=".service.SinchService"
+            android:exported="false"
+            android:description="@string/service_description"/>
     </application>
 
 </manifest>
