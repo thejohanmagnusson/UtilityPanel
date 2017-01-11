@@ -36,34 +36,14 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        getMenuInflater().inflate(R.menu.menu_main, menu);
-//        return true;
-//    }
-
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        int id = item.getItemId();
-//
-//        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
-
     // ContactListFragment.OnContactSelectedListener
     @Override
     public void onContactSelected(Contact contact) {
         Intent intent = new Intent(this, CallActivity.class);
-        intent.putExtra(CallActivity.CONTACT_NAME_KEY, contact.getName());
-        intent.putExtra(CallActivity.CONTACT_NUMBER_KEY, contact.getPhone());
+        // TODO: Implement device ID as username
+        intent.putExtra(CallFragment.ARG_USERNAME, "1234567890");
+        intent.putExtra(CallFragment.ARG_CONTACT_NAME, contact.getName());
+        intent.putExtra(CallFragment.ARG_CONTACT_NUMBER, contact.getPhone());
 
         startActivity(intent);
     }
