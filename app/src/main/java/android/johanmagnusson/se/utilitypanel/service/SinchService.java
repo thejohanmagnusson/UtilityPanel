@@ -19,7 +19,8 @@ import com.sinch.android.rtc.calling.CallListener;
 
 import java.util.List;
 
-public class SinchService extends Service {
+public class SinchService extends Service
+                          implements SinchClientListener, CallListener {
 
     private static final String TAG = SinchService.class.getSimpleName();
 
@@ -28,13 +29,20 @@ public class SinchService extends Service {
     private static final String ENVIRONMENT = BuildConfig.SINCH_ENVIRONMENT;
 
     public static final String TEST_NUMBER = "+46000000000";
-    public static final String CALL_ID = "CALL_ID";
+
+    private static final int CLIENT_NOT_CONNECTED = 0;
+    private static final int CLIENT_CONNECTED = 1;
+    private static final int PLACE_CALL = 2;
+    private static final int ONGOING_CALL = 3;
 
     private final IBinder mBinder = new SinchBinder();
+    private OnCallListener mCallListener;
     private SinchClient mSinchClient;
-    private String mUserId;
+    private int mState;
+    private String mPhoneNumber;
+    private String mCallId;
 
-    // Binder/Interface
+    // Binder
     public class SinchBinder extends Binder {
 
         public SinchService getService() {
@@ -42,14 +50,14 @@ public class SinchService extends Service {
         }
     }
 
-
-    public SinchService() {
-
+    // Interface
+    public interface OnCallListener {
+        void onCallEstablished();
+        void onCallEnded();
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
+    public SinchService() {
+        mState = CLIENT_NOT_CONNECTED;
     }
 
     @Nullable
@@ -58,100 +66,134 @@ public class SinchService extends Service {
         return mBinder;
     }
 
+    public void setOnCallListener(OnCallListener listener) {
+        mCallListener = listener;
+    }
+
+    public void callPhoneNumber(String userName, String phoneNumber) {
+        mPhoneNumber = phoneNumber;
+
+        if(!isStarted()) {
+            mState = PLACE_CALL;
+            startClient(userName);
+        }
+        else {
+            placePhoneCall(phoneNumber);
+        }
+    }
+
+    private boolean isStarted() {
+        return (mSinchClient != null && mSinchClient.isStarted());
+    }
+
+    //region SinchClient
+    private void startClient(String userName) {
+        mSinchClient = Sinch.getSinchClientBuilder().context(getApplicationContext()).userId(userName)
+                .applicationKey(APP_KEY)
+                .applicationSecret(APP_SECRET)
+                .environmentHost(ENVIRONMENT).build();
+
+        mSinchClient.setSupportCalling(true);
+        mSinchClient.addSinchClientListener(this);
+        mSinchClient.start();
+    }
+
+    @Override
+    public void onClientStarted(SinchClient sinchClient) {
+        Log.d(TAG, "--------- SinchClient started");
+
+        if(mState == PLACE_CALL) {
+            placePhoneCall(mPhoneNumber);
+        }
+        else {
+            mState = CLIENT_CONNECTED;
+        }
+    }
+
+    @Override
+    public void onClientStopped(SinchClient sinchClient) {
+        Log.d(TAG, "--------- SinchClient stopped");
+        mState = CLIENT_NOT_CONNECTED;
+    }
+
+    @Override
+    public void onClientFailed(SinchClient sinchClient, SinchError sinchError) {
+        Log.d(TAG, "--------- SinchClient failed: " + sinchError.getMessage());
+        mState = CLIENT_NOT_CONNECTED;
+        mSinchClient.terminate();
+        mSinchClient = null;
+    }
+
+    @Override
+    public void onRegistrationCredentialsRequired(SinchClient sinchClient, ClientRegistration clientRegistration) {
+        Log.d(TAG, "--------- SinchClient: credentials required");
+
+    }
+
+    @Override
+    public void onLogMessage(int i, String s, String s1) {
+
+    }
+    //endregion
+
+    //region Phone call
+    private void placePhoneCall(String phoneNumber) {
+        Call call = mSinchClient.getCallClient().callPhoneNumber(phoneNumber);
+        call.addCallListener(this);
+        mCallId = call.getCallId();
+    }
+
+    @Override
+    public void onCallProgressing(Call call) {
+        mState = ONGOING_CALL;
+        // This callback is never called ?!
+    }
+
+    @Override
+    public void onCallEstablished(Call call) {
+        mState = ONGOING_CALL;
+        if(mCallListener != null) {
+            mCallListener.onCallEstablished();
+        }
+    }
+
+    @Override
+    public void onCallEnded(Call call) {
+        mState = CLIENT_CONNECTED;
+        mCallId = null;
+
+        if(mCallListener != null) {
+            mCallListener.onCallEnded();
+        }
+    }
+
+    @Override
+    public void onShouldSendPushNotification(Call call, List<PushPair> list) {
+    }
+    //endregion
+
+    public boolean isCallInProgress() {
+        return mSinchClient != null && mSinchClient.getCallClient().getCall(mCallId) != null;
+    }
+
+    public void hangup() {
+        if(mSinchClient != null) {
+            Call call = mSinchClient.getCallClient().getCall(mCallId);
+
+            if(call != null) {
+                call.hangup();
+                mCallId = null;
+            }
+        }
+    }
+
     @Override
     public void onDestroy() {
-        if (mSinchClient != null && mSinchClient.isStarted()) {
-            mSinchClient.terminate();
-        }
-
-        super.onDestroy();
-    }
-
-    public String getUserName() {
-        return mUserId;
-    }
-
-    public void StartClient(String userName) {
-        if (mSinchClient == null) {
-            mUserId = userName;
-
-            mSinchClient = Sinch.getSinchClientBuilder().context(getApplicationContext()).userId(userName)
-                    .applicationKey(APP_KEY)
-                    .applicationSecret(APP_SECRET)
-                    .environmentHost(ENVIRONMENT).build();
-
-            mSinchClient.setSupportCalling(true);
-
-            mSinchClient.addSinchClientListener(new MySinchClientListener());
-            mSinchClient.start();
-        }
-    }
-
-    public void stopClient() {
         if (mSinchClient != null) {
             mSinchClient.terminate();
             mSinchClient = null;
         }
-    }
 
-    //// TODO: handle exceptions
-    public void callPhoneNumber(String phoneNumber) {
-        Call call = mSinchClient.getCallClient().callPhoneNumber(phoneNumber);
-        call.addCallListener(new CallListener() {
-            @Override
-            public void onCallProgressing(Call call) {
-                //CALL_PROGRESSING
-            }
-
-            @Override
-            public void onCallEstablished(Call call) {
-                //CALL_ESTABLISHED
-            }
-
-            @Override
-            public void onCallEnded(Call call) {
-                //CALL_ENDED
-            }
-
-            @Override
-            public void onShouldSendPushNotification(Call call, List<PushPair> list) {
-                // Can't reach receivers device, need to wake up with a push notification.
-            }
-        });
-    }
-
-    public void hangup() {
-
-    }
-
-    private class MySinchClientListener implements SinchClientListener {
-
-        @Override
-        public void onClientStarted(SinchClient sinchClient) {
-            Log.d(TAG, "--------- SinchClient started");
-        }
-
-        @Override
-        public void onClientStopped(SinchClient sinchClient) {
-            Log.d(TAG, "--------- SinchClient stopped");
-        }
-
-        @Override
-        public void onClientFailed(SinchClient sinchClient, SinchError sinchError) {
-            Log.d(TAG, "--------- SinchClient failed: " + sinchError.getMessage());
-
-            mSinchClient.terminate();
-            mSinchClient = null;
-        }
-
-        @Override
-        public void onRegistrationCredentialsRequired(SinchClient sinchClient, ClientRegistration clientRegistration) {
-            Log.d(TAG, "--------- SinchClient: credentials required");
-        }
-
-        @Override
-        public void onLogMessage(int i, String s, String s1) {
-
-        }
+        super.onDestroy();
     }
 }
