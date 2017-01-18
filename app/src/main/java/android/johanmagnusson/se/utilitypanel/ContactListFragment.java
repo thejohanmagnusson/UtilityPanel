@@ -17,7 +17,7 @@ import com.google.firebase.database.Query;
 
 public class ContactListFragment extends Fragment {
     public interface OnContactSelectedListener {
-        void onContactSelected(Contact contact);
+        void onContactSelected(Contact contact, View animationView);
     }
 
     public static final String TAG = ContactListFragment.class.getSimpleName();
@@ -57,7 +57,7 @@ public class ContactListFragment extends Fragment {
         // Removed in onDestroy()
         mAdapter = new MyFirebaseRecyclerAdapter<Contact, ContactViewHolder>(Contact.class, R.layout.contact_item, ContactViewHolder.class, contactQuery) {
             @Override
-            protected void populateViewHolder(ContactViewHolder viewHolder, final Contact model, int position) {
+            protected void populateViewHolder(final ContactViewHolder viewHolder, final Contact model, int position) {
                 final DatabaseReference ref = getRef(position);
 
                 viewHolder.bindToModel(model);
@@ -66,7 +66,7 @@ public class ContactListFragment extends Fragment {
                 viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        mListener.onContactSelected(model);
+                        mListener.onContactSelected(model, viewHolder.nameView);
                     }
                 });
             }

@@ -9,7 +9,9 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -71,6 +73,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    // TODO: Handle permissions
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -80,9 +83,8 @@ public class MainActivity extends AppCompatActivity
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission granted
                 } else {
-                    mMissingPermission = true;
                     // permission denied
-                    // Disable functionality that depends on the permisison.
+                    // Disable functionality that depends on the permission.
                 }
                 return;
             }
@@ -91,9 +93,8 @@ public class MainActivity extends AppCompatActivity
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission granted
                 } else {
-                    mMissingPermission = true;
                     // permission denied
-                    // Disable functionality that depends on the permisison.
+                    // Disable functionality that depends on the permission.
                 }
                 return;
             }
@@ -103,7 +104,7 @@ public class MainActivity extends AppCompatActivity
 
     // ContactListFragment.OnContactSelectedListener
     @Override
-    public void onContactSelected(Contact contact) {
+    public void onContactSelected(Contact contact, View animationView) {
 
         if(mMissingPermission) {
             Toast.makeText(this, "Missing permission", Toast.LENGTH_SHORT).show();
@@ -112,10 +113,14 @@ public class MainActivity extends AppCompatActivity
 
         Intent intent = new Intent(this, CallActivity.class);
         // TODO: Implement device ID as username
-        intent.putExtra(CallFragment.ARG_USERNAME, Long.toString(Calendar.getInstance().getTimeInMillis()));
-        intent.putExtra(CallFragment.ARG_CONTACT_NAME, contact.getName());
-        intent.putExtra(CallFragment.ARG_CONTACT_PHONE_NUMBER, contact.getPhone());
+        intent.putExtra(CallActivity.ARG_USERNAME, Long.toString(Calendar.getInstance().getTimeInMillis()));
+        intent.putExtra(CallActivity.ARG_CONTACT_NAME, contact.getName());
+        intent.putExtra(CallActivity.ARG_CONTACT_PHONE_NUMBER, contact.getPhone());
 
-        startActivity(intent);
+        // Animate contact name
+        Pair contactNameTrans = new Pair<>(animationView, getString(R.string.transition_contact_name));
+        ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, contactNameTrans);
+
+        ActivityCompat.startActivity(this, intent, options.toBundle());
     }
 }

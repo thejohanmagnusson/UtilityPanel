@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.johanmagnusson.se.utilitypanel.BuildConfig;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -42,6 +43,17 @@ public class SinchService extends Service
     private String mPhoneNumber;
     private String mCallId;
 
+    private final Handler mCallProgressHandler;
+    private int mCallDuration;
+
+    private Runnable trackCallProgress = new Runnable() {
+        @Override
+        public void run() {
+            mCallListener.onCallDurationChanged(mCallDuration++);
+            mCallProgressHandler.postDelayed(this, 1000);
+        }
+    };
+
     // Binder
     public class SinchBinder extends Binder {
 
@@ -54,10 +66,12 @@ public class SinchService extends Service
     public interface OnCallListener {
         void onCallEstablished();
         void onCallEnded();
+        void onCallDurationChanged(int callDuration);
     }
 
     public SinchService() {
         mState = CLIENT_NOT_CONNECTED;
+        mCallProgressHandler = new Handler();
     }
 
     @Nullable
@@ -100,8 +114,6 @@ public class SinchService extends Service
 
     @Override
     public void onClientStarted(SinchClient sinchClient) {
-        Log.d(TAG, "--------- SinchClient started");
-
         if(mState == PLACE_CALL) {
             placePhoneCall(mPhoneNumber);
         }
@@ -112,7 +124,6 @@ public class SinchService extends Service
 
     @Override
     public void onClientStopped(SinchClient sinchClient) {
-        Log.d(TAG, "--------- SinchClient stopped");
         mState = CLIENT_NOT_CONNECTED;
     }
 
@@ -126,7 +137,6 @@ public class SinchService extends Service
 
     @Override
     public void onRegistrationCredentialsRequired(SinchClient sinchClient, ClientRegistration clientRegistration) {
-        Log.d(TAG, "--------- SinchClient: credentials required");
 
     }
 
@@ -152,9 +162,13 @@ public class SinchService extends Service
     @Override
     public void onCallEstablished(Call call) {
         mState = ONGOING_CALL;
+        mCallDuration = 0;
+
         if(mCallListener != null) {
             mCallListener.onCallEstablished();
         }
+
+        mCallProgressHandler.postDelayed(trackCallProgress, 1);
     }
 
     @Override
@@ -189,6 +203,8 @@ public class SinchService extends Service
 
     @Override
     public void onDestroy() {
+        mCallProgressHandler.removeCallbacks(trackCallProgress);
+
         if (mSinchClient != null) {
             mSinchClient.terminate();
             mSinchClient = null;
@@ -196,4 +212,5 @@ public class SinchService extends Service
 
         super.onDestroy();
     }
+
 }
