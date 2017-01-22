@@ -4,20 +4,27 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.johanmagnusson.se.utilitypanel.constant.Firebase;
 import android.johanmagnusson.se.utilitypanel.model.Contact;
+import android.johanmagnusson.se.utilitypanel.model.Panel;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.widget.Toast;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Calendar;
+
+import static android.johanmagnusson.se.utilitypanel.R.id.fab;
 
 public class MainActivity extends AppCompatActivity
                           implements ContactListFragment.OnContactSelectedListener {
@@ -27,28 +34,83 @@ public class MainActivity extends AppCompatActivity
     private static final int REQ_CODE_RECORD_AUDIO = 1;
     private static final int REQ_CODE_READ_PHONE_STATE = 2;
 
-    private boolean mMissingPermission;
+    private Toolbar mToolbar;
+    private FloatingActionButton mFab;
+
+    private DatabaseReference mFirebasePanelDetails;
+
+    private boolean mHasIntercomFeature;
+    private boolean mHasAccessCodeFeature;
+    private String mAccessCode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+
+        mFab = (FloatingActionButton) findViewById(fab);
 
         if(savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, new ContactListFragment(), ContactListFragment.TAG).commit();
         }
+    }
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Access control panel", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // TODO: use device id as key
+        mFirebasePanelDetails = FirebaseDatabase.getInstance().getReference(Firebase.NODE_PANEL_DETAILS).child("1");
+        // No need to handle removing lister, single event.
+        mFirebasePanelDetails.addListenerForSingleValueEvent(mPanelListener);
+    }
+
+    private ValueEventListener mPanelListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            Panel panel = dataSnapshot.getValue(Panel.class);
+            mToolbar.setTitle(panel.getDescription());
+
+            // Handle intercom feature
+            mHasIntercomFeature = panel.getHasIntercomFeature();
+            setupIntercomFeature(mHasIntercomFeature);
+
+            // Handle access code feature
+            mHasAccessCodeFeature = panel.getHasAccessCodeFeature();
+            mAccessCode = mHasAccessCodeFeature ? panel.getAccessCode() : null;
+            setupAccessCodeFeature(mHasAccessCodeFeature);
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+            // TODO: Show error information
+        }
+    };
+
+    private void setupIntercomFeature(boolean hasIntercomFeature) {
+
+    }
+
+    private void setupAccessCodeFeature(boolean hasAccessCodeFeature) {
+        if(hasAccessCodeFeature) {
+            if(mFab.getVisibility() != View.VISIBLE) { mFab.setVisibility(View.VISIBLE); }
+
+            mFab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Snackbar.make(view, "Access control panel", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+            });
+        }
+        else {
+            if(mFab.getVisibility() == View.VISIBLE) { mFab.setVisibility(View.GONE); }
+
+            mFab.setOnClickListener(null);
+        }
     }
 
     @Override
@@ -75,8 +137,7 @@ public class MainActivity extends AppCompatActivity
 
     // TODO: Handle permissions
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case REQ_CODE_RECORD_AUDIO: {
                 // If request is cancelled, the result arrays are empty.
@@ -101,15 +162,9 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
     // ContactListFragment.OnContactSelectedListener
     @Override
     public void onContactSelected(Contact contact, View animationView) {
-
-        if(mMissingPermission) {
-            Toast.makeText(this, "Missing permission", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         Intent intent = new Intent(this, CallActivity.class);
         // TODO: Implement device ID as username
@@ -117,10 +172,6 @@ public class MainActivity extends AppCompatActivity
         intent.putExtra(CallActivity.ARG_CONTACT_NAME, contact.getName());
         intent.putExtra(CallActivity.ARG_CONTACT_PHONE_NUMBER, contact.getPhone());
 
-        // Animate contact name
-        Pair contactNameTrans = new Pair<>(animationView, getString(R.string.transition_contact_name));
-        ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, contactNameTrans);
-
-        ActivityCompat.startActivity(this, intent, options.toBundle());
+        startActivity(intent);
     }
 }

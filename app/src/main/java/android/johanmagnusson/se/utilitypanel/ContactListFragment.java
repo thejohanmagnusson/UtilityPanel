@@ -23,7 +23,7 @@ public class ContactListFragment extends Fragment {
     public static final String TAG = ContactListFragment.class.getSimpleName();
 
     private OnContactSelectedListener mListener;
-    private DatabaseReference mDatabase;
+    private DatabaseReference mDatabaseIntercomContacts;
 
     private MyFirebaseRecyclerAdapter<Contact, ContactViewHolder> mAdapter;
     private MyRecyclerView mRecyclerView;
@@ -36,7 +36,7 @@ public class ContactListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_contact_list, container, false);
 
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+        mDatabaseIntercomContacts = FirebaseDatabase.getInstance().getReference().child(Firebase.NODE_INTERCOM_CONTACTS);
 
         mRecyclerView = (MyRecyclerView) root.findViewById(R.id.contact_list);
         mRecyclerView.setHasFixedSize(true);
@@ -52,7 +52,8 @@ public class ContactListFragment extends Fragment {
         mManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mManager);
 
-        Query contactQuery = mDatabase.child(Firebase.NODE_CONTACTS).orderByChild(Firebase.PROPERTY_NAME);
+        // Todo: Use device id as key
+        Query contactQuery = mDatabaseIntercomContacts.child("1").orderByChild(Firebase.PROPERTY_NAME);
 
         // Removed in onDestroy()
         mAdapter = new MyFirebaseRecyclerAdapter<Contact, ContactViewHolder>(Contact.class, R.layout.contact_item, ContactViewHolder.class, contactQuery) {
