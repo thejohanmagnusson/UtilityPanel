@@ -13,18 +13,18 @@ public class Contact {
         return name;
     }
 
-    private String phone;
-    public String getPhone() {
-        return phone;
+    private String phonenumber;
+    public String getPhonenumber() {
+        return phonenumber;
     }
 
     public Contact(){
         // Default constructor required for calls to DataSnapshot.getValue(Contact.class)
     }
 
-    public Contact(String name, String phone){
+    public Contact(String name, String phonenumber){
         this.name = name;
-        this.phone = phone;
+        this.phonenumber = phonenumber;
     }
 
     @Exclude
@@ -32,7 +32,7 @@ public class Contact {
         HashMap<String, Object> result = new HashMap<>();
 
         result.put("name", name);
-        result.put("phone", phone);
+        result.put("phonenumber", phonenumber);
 
         return result;
     }

@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity
         // TODO: Implement device ID as username
         intent.putExtra(CallActivity.ARG_USERNAME, Long.toString(Calendar.getInstance().getTimeInMillis()));
         intent.putExtra(CallActivity.ARG_CONTACT_NAME, contact.getName());
-        intent.putExtra(CallActivity.ARG_CONTACT_PHONE_NUMBER, contact.getPhone());
+        intent.putExtra(CallActivity.ARG_CONTACT_PHONE_NUMBER, contact.getPhonenumber());
 
         startActivity(intent);
     }
