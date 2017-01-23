@@ -1,9 +1,10 @@
 package android.johanmagnusson.se.utilitypanel.model;
 
-import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 @IgnoreExtraProperties
 public class Panel {
@@ -13,31 +14,27 @@ public class Panel {
         return description;
     }
 
-    private boolean hasIntercom;
-    public boolean getHasIntercomFeature() { return hasIntercom; }
+    private String defaultFeature;
+    public String getDefaultFeature() { return defaultFeature; }
 
-    private boolean hasAccessCode;
-    public boolean getHasAccessCodeFeature() { return hasAccessCode; }
+    private HashMap<String, Object> features;
+    public HashMap<String, Object> getFeaturesAsHashMap() { return features; }
 
-    private String accessCode;
-    public String getAccessCode() { return accessCode; }
+    public boolean hasFeature(String feature) {
+        return features.keySet().contains(feature);
+    }
+
+    public List<String> getFeatures() {
+        ArrayList<String> list = new ArrayList<>();
+
+        for(String key : features.keySet()) {
+            list.add(key);
+        }
+
+        return list;
+    }
 
     public Panel() {
         // Default constructor required for calls to DataSnapshot.getValue(Panel.class)
-    }
-
-    public Panel(String name) {
-        this.description = name;
-    }
-
-    @Exclude
-    public HashMap<String, Object> toMap() {
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("description", description);
-        result.put("hasIntercom", hasIntercom);
-        result.put("hasAccessCode", hasAccessCode);
-        result.put("accessCode", accessCode);
-
-        return result;
     }
 }

@@ -4,16 +4,20 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.johanmagnusson.se.utilitypanel.constant.Feature;
 import android.johanmagnusson.se.utilitypanel.constant.Firebase;
 import android.johanmagnusson.se.utilitypanel.model.Contact;
 import android.johanmagnusson.se.utilitypanel.model.Panel;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 
 import com.google.firebase.database.DataSnapshot;
@@ -22,12 +26,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import static android.johanmagnusson.se.utilitypanel.R.id.fab;
 
 public class MainActivity extends AppCompatActivity
-                          implements ContactListFragment.OnContactSelectedListener {
+                          implements IntercomFragment.OnContactSelectedListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -39,9 +45,15 @@ public class MainActivity extends AppCompatActivity
 
     private DatabaseReference mFirebasePanelDetails;
 
-    private boolean mHasIntercomFeature;
-    private boolean mHasAccessCodeFeature;
+    private String mDefaultFeature;
+    private List<String> mFeatures;
     private String mAccessCode;
+
+    private String mCurrentFragmentTag;
+
+    public MainActivity() {
+        mFeatures = new ArrayList<>();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,10 +63,12 @@ public class MainActivity extends AppCompatActivity
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
 
+        // Hide FAB until a fragment is added.
         mFab = (FloatingActionButton) findViewById(fab);
+        mFab.setVisibility(View.INVISIBLE);
 
         if(savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, new ContactListFragment(), ContactListFragment.TAG).commit();
+            // TODO: show loading fragment
         }
     }
 
@@ -74,42 +88,85 @@ public class MainActivity extends AppCompatActivity
             Panel panel = dataSnapshot.getValue(Panel.class);
             mToolbar.setTitle(panel.getDescription());
 
-            // Handle intercom feature
-            mHasIntercomFeature = panel.getHasIntercomFeature();
-            setupIntercomFeature(mHasIntercomFeature);
+            // Check for unsupported features
+            List<String> supportedFeatures = Feature.supported();
 
-            // Handle access code feature
-            mHasAccessCodeFeature = panel.getHasAccessCodeFeature();
-            mAccessCode = mHasAccessCodeFeature ? panel.getAccessCode() : null;
-            setupAccessCodeFeature(mHasAccessCodeFeature);
+            for(String feature : panel.getFeatures()) {
+                if(!supportedFeatures.contains(feature)) {
+                    Log.i(TAG, "----- Unsupported panel feature: " + feature);
+                }
+            }
+
+            // Setup panel features
+            mFeatures = panel.getFeatures();
+
+            if(mFeatures.size() > 0) {
+                mDefaultFeature = panel.getDefaultFeature();
+
+                if(mFeatures.contains(mDefaultFeature)) {
+                    setFeatureView(mDefaultFeature);
+                }
+                else {
+                    setFeatureView(mFeatures.get(0));
+                }
+            }
+            else {
+                // TODO: Set UI for Error
+            }
         }
 
         @Override
         public void onCancelled(DatabaseError databaseError) {
-            // TODO: Show error information
+            // TODO: Set UI for Error
         }
     };
 
-    private void setupIntercomFeature(boolean hasIntercomFeature) {
-
+    private void setFeatureView(String feature) {
+        if(feature.equals(Feature.ACCESS_CODE)) {
+            setAccessCodeView();
+        }
+        else if(feature.equals(Feature.INTERCOM)) {
+            setIntercomView();
+        }
     }
 
-    private void setupAccessCodeFeature(boolean hasAccessCodeFeature) {
-        if(hasAccessCodeFeature) {
-            if(mFab.getVisibility() != View.VISIBLE) { mFab.setVisibility(View.VISIBLE); }
+    private void setAccessCodeView() {
+        // Todo: Use device id as key
+//        AccessCodeFragment fragment = new AccessCodeFragment().newInstance("1");
+//        setFragment(fragment, fragment.TAG);
 
-            mFab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Snackbar.make(view, "Access control panel", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                }
-            });
+        // TODO: Handle FAB
+    }
+
+    private void setIntercomView() {
+        // Todo: Use device id as key
+        IntercomFragment fragment = new IntercomFragment().newInstance("1");
+        setFragment(fragment, fragment.TAG);
+
+        // TODO: Handle FAB
+//        if(mFab.getVisibility() != View.VISIBLE) { mFab.setVisibility(View.VISIBLE); }
+//
+//        mFab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Access control panel", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//            }
+//        });
+    }
+
+    private void setFragment(Fragment fragment, String fragmentTag) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+
+        // Add fragment if container is empty
+        if(TextUtils.isEmpty(mCurrentFragmentTag)) {
+            fragmentManager.beginTransaction().add(R.id.fragment_container, fragment, fragmentTag).commit();
+            mCurrentFragmentTag = fragmentTag;
         }
+        // ...Replace fragment
         else {
-            if(mFab.getVisibility() == View.VISIBLE) { mFab.setVisibility(View.GONE); }
-
-            mFab.setOnClickListener(null);
+            fragmentManager.beginTransaction().replace(R.id.fragment_container, fragment, fragmentTag).commit();
+            mCurrentFragmentTag = fragmentTag;
         }
     }
 
@@ -162,7 +219,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    // ContactListFragment.OnContactSelectedListener
+    // IntercomFragment.OnContactSelectedListener
     @Override
     public void onContactSelected(Contact contact, View animationView) {
 

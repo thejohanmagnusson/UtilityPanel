@@ -15,12 +15,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 
-public class ContactListFragment extends Fragment {
+public class IntercomFragment extends Fragment {
     public interface OnContactSelectedListener {
         void onContactSelected(Contact contact, View animationView);
     }
 
-    public static final String TAG = ContactListFragment.class.getSimpleName();
+    public static final String TAG = IntercomFragment.class.getSimpleName();
+
+    public static final String ARG_DEVICE_KEY = "device-key";
 
     private OnContactSelectedListener mListener;
     private DatabaseReference mDatabaseIntercomContacts;
@@ -29,7 +31,33 @@ public class ContactListFragment extends Fragment {
     private MyRecyclerView mRecyclerView;
     private LinearLayoutManager mManager;
 
-    public ContactListFragment() {
+    private String mDeviceKey;
+
+    public static IntercomFragment newInstance(String deviceKey) {
+        Bundle args = new Bundle();
+        args.putString(ARG_DEVICE_KEY, deviceKey);
+
+        IntercomFragment fragment = new IntercomFragment();
+        fragment.setArguments(args);
+
+        return fragment;
+    }
+
+    public IntercomFragment() {
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if(savedInstanceState == null) {
+            Bundle args = getArguments();
+
+            mDeviceKey = args.getString(ARG_DEVICE_KEY);
+        }
+        else {
+            mDeviceKey = savedInstanceState.getString(ARG_DEVICE_KEY);
+        }
     }
 
     @Override
@@ -52,7 +80,6 @@ public class ContactListFragment extends Fragment {
         mManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mManager);
 
-        // Todo: Use device id as key
         Query contactQuery = mDatabaseIntercomContacts.child("1").orderByChild(Firebase.PROPERTY_NAME);
 
         // Removed in onDestroy()
@@ -74,6 +101,12 @@ public class ContactListFragment extends Fragment {
         };
 
         mRecyclerView.setAdapter(mAdapter);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString(ARG_DEVICE_KEY, mDeviceKey);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
