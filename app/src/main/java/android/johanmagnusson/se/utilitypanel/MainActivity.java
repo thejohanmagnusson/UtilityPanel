@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.johanmagnusson.se.utilitypanel.Util.AnimUtils;
 import android.johanmagnusson.se.utilitypanel.constant.Feature;
 import android.johanmagnusson.se.utilitypanel.constant.Firebase;
 import android.johanmagnusson.se.utilitypanel.model.Contact;
@@ -65,7 +66,9 @@ public class MainActivity extends AppCompatActivity
 
         // Hide FAB until a fragment is added.
         mFab = (FloatingActionButton) findViewById(fab);
-        mFab.setVisibility(View.INVISIBLE);
+        mFab.setAlpha(0f);
+        mFab.setScaleX(0f);
+        mFab.setScaleY(0f);
 
         if(savedInstanceState == null) {
             // TODO: show loading fragment
@@ -89,7 +92,7 @@ public class MainActivity extends AppCompatActivity
             mToolbar.setTitle(panel.getDescription());
 
             // Check for unsupported features
-            List<String> supportedFeatures = Feature.supported();
+            List<String> supportedFeatures = Feature.getSupported();
 
             for(String feature : panel.getFeatures()) {
                 if(!supportedFeatures.contains(feature)) {
@@ -132,27 +135,31 @@ public class MainActivity extends AppCompatActivity
 
     private void setAccessCodeView() {
         // Todo: Use device id as key
-//        AccessCodeFragment fragment = new AccessCodeFragment().newInstance("1");
-//        setFragment(fragment, fragment.TAG);
+        AccessCodeFragment fragment = new AccessCodeFragment().newInstance("1");
+        setFragment(fragment, fragment.TAG);
 
-        // TODO: Handle FAB
+        showFab(R.drawable.ic_call_end_white_24dp);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideFab();
+                setIntercomView();
+            }
+        });
     }
 
     private void setIntercomView() {
         // Todo: Use device id as key
         IntercomFragment fragment = new IntercomFragment().newInstance("1");
         setFragment(fragment, fragment.TAG);
-
-        // TODO: Handle FAB
-//        if(mFab.getVisibility() != View.VISIBLE) { mFab.setVisibility(View.VISIBLE); }
-//
-//        mFab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Access control panel", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
+        showFab(R.drawable.ic_dialpad_white_24dp);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideFab();
+                setAccessCodeView();
+            }
+        });
     }
 
     private void setFragment(Fragment fragment, String fragmentTag) {
@@ -168,6 +175,32 @@ public class MainActivity extends AppCompatActivity
             fragmentManager.beginTransaction().replace(R.id.fragment_container, fragment, fragmentTag).commit();
             mCurrentFragmentTag = fragmentTag;
         }
+    }
+
+    private void showFab(@android.support.annotation.DrawableRes int iconResId) {
+        mFab.setAlpha(0f);
+        mFab.setScaleX(0f);
+        mFab.setScaleY(0f);
+        mFab.setImageResource(iconResId);
+        mFab.setTranslationY(mFab.getHeight() / 2);
+        mFab.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .translationY(0f)
+                .setDuration(300L)
+                .setInterpolator(AnimUtils.getLinearOutSlowInInterpolator(this))
+                .start();
+    }
+
+    private void hideFab() {
+        mFab.animate()
+                .alpha(0f)
+                .scaleX(0f)
+                .scaleY(0f)
+                .setDuration(300L)
+                .setInterpolator(AnimUtils.getLinearOutSlowInInterpolator(this))
+                .start();
     }
 
     @Override
@@ -222,6 +255,7 @@ public class MainActivity extends AppCompatActivity
     // IntercomFragment.OnContactSelectedListener
     @Override
     public void onContactSelected(Contact contact, View animationView) {
+        hideFab();
 
         Intent intent = new Intent(this, CallActivity.class);
         // TODO: Implement device ID as username

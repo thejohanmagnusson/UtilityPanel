@@ -1,6 +1,6 @@
-package android.johanmagnusson.se.utilitypanel;
+package android.johanmagnusson.se.utilitypanel.Util;
 
-public class Utility {
+public class FormatUtils {
 
     public static String formatCallDuration(int callDuration) {
         int sec = callDuration % 60;

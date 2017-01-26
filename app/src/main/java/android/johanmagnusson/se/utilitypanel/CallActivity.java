@@ -4,6 +4,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.johanmagnusson.se.utilitypanel.Util.FormatUtils;
 import android.johanmagnusson.se.utilitypanel.service.SinchService;
 import android.media.AudioManager;
 import android.os.Bundle;
@@ -155,7 +156,7 @@ public class CallActivity extends AppCompatActivity {
 
         @Override
         public void onCallDurationChanged(int callDuration) {
-            mCallStateTextView.setText(Utility.formatCallDuration(callDuration));
+            mCallStateTextView.setText(FormatUtils.formatCallDuration(callDuration));
         }
     };
 
