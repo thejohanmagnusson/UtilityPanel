@@ -20,6 +20,9 @@ public class Panel {
     private HashMap<String, Object> features;
     public HashMap<String, Object> getFeaturesAsHashMap() { return features; }
 
+    private boolean intercomExpandSingleContactGroup;
+    public boolean getIntercomExpandSingleContactGroup() { return intercomExpandSingleContactGroup; }
+
     public boolean hasFeature(String feature) {
         return features.keySet().contains(feature);
     }

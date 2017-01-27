@@ -34,7 +34,7 @@ import java.util.List;
 import static android.johanmagnusson.se.utilitypanel.R.id.fab;
 
 public class MainActivity extends AppCompatActivity
-                          implements IntercomFragment.OnContactSelectedListener {
+                          implements IntercomContactsFragment.OnContactSelectedListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -48,6 +48,9 @@ public class MainActivity extends AppCompatActivity
 
     private String mDefaultFeature;
     private List<String> mFeatures;
+    private boolean mIntercomExpandSingleContactsGroup;
+    private boolean mIntercomHasSingleGroup;
+    private String mIntercomSingleGroupKey;
     private String mAccessCode;
 
     private String mCurrentFragmentTag;
@@ -103,6 +106,13 @@ public class MainActivity extends AppCompatActivity
             // Setup panel features
             mFeatures = panel.getFeatures();
 
+            if(!dataSnapshot.child(Firebase.NODE_INTERCOM_GROUPS).exists()) {
+                Log.e(TAG, "Missing Firebase child: " + Firebase.NODE_INTERCOM_GROUPS);
+            }
+            mIntercomHasSingleGroup = dataSnapshot.child(Firebase.NODE_INTERCOM_GROUPS).getChildrenCount() <= 1 ? true : false;
+            mIntercomSingleGroupKey = dataSnapshot.child(Firebase.NODE_INTERCOM_GROUPS).getChildren().iterator().next().getKey();
+            mIntercomExpandSingleContactsGroup = panel.getIntercomExpandSingleContactGroup();
+
             if(mFeatures.size() > 0) {
                 mDefaultFeature = panel.getDefaultFeature();
 
@@ -150,8 +160,17 @@ public class MainActivity extends AppCompatActivity
 
     private void setIntercomView() {
         // Todo: Use device id as key
-        IntercomFragment fragment = new IntercomFragment().newInstance("1");
-        setFragment(fragment, fragment.TAG);
+
+        if(mIntercomHasSingleGroup) {
+            IntercomContactsFragment fragment = new IntercomContactsFragment().newInstance("1", mIntercomSingleGroupKey);
+            setFragment(fragment, fragment.TAG);
+        }
+        else {
+//            IntercomGroupFragment fragment = new IntercomGroupFragment().newInstance("1");
+//            setFragment(fragment, fragment.TAG);
+        }
+
+
         showFab(R.drawable.ic_dialpad_white_24dp);
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override

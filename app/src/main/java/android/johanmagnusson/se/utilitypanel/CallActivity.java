@@ -9,9 +9,12 @@ import android.johanmagnusson.se.utilitypanel.service.SinchService;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.transition.TransitionManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 public class CallActivity extends AppCompatActivity {
@@ -29,6 +32,8 @@ public class CallActivity extends AppCompatActivity {
     private String mContactName;
     private String mContactPhoneNumber;
 
+    private ConstraintLayout mSceneRoot;
+    private ImageView mIcon;
     private TextView mContactNameTextView;
     private TextView mCallStateTextView;
     private FloatingActionButton mHangUpFab;
@@ -56,10 +61,16 @@ public class CallActivity extends AppCompatActivity {
             mContactPhoneNumber = savedInstanceState.getString(ARG_CONTACT_PHONE_NUMBER);
         }
 
+        mSceneRoot = (ConstraintLayout) findViewById(R.id.scene_root);
+        mIcon = (ImageView) findViewById(R.id.contact_icon);
+        mIcon.setVisibility(View.INVISIBLE);
+
         mContactNameTextView = (TextView) findViewById(R.id.contact_name);
+        mContactNameTextView.setVisibility(View.INVISIBLE);
         mContactNameTextView.setText(mContactName);
 
         mCallStateTextView = (TextView) findViewById(R.id.call_state);
+        mCallStateTextView.setVisibility(View.INVISIBLE);
         mCallStateTextView.setText(getResources().getString(R.string.call_state_calling));
 
         mHangUpFab = (FloatingActionButton) findViewById(R.id.hang_up);
@@ -72,6 +83,11 @@ public class CallActivity extends AppCompatActivity {
                 }
             }
         });
+
+        TransitionManager.beginDelayedTransition(mSceneRoot);
+        mIcon.setVisibility(View.VISIBLE);
+        mContactNameTextView.setVisibility(View.VISIBLE);
+        mCallStateTextView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -93,6 +109,13 @@ public class CallActivity extends AppCompatActivity {
             Intent intent = new Intent(this, SinchService.class);
             bindService(intent, mConnection, BIND_AUTO_CREATE);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+
     }
 
     @Override

@@ -15,14 +15,15 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 
-public class IntercomFragment extends Fragment {
+public class IntercomContactsFragment extends Fragment {
     public interface OnContactSelectedListener {
         void onContactSelected(Contact contact, View animationView);
     }
 
-    public static final String TAG = IntercomFragment.class.getSimpleName();
+    public static final String TAG = IntercomContactsFragment.class.getSimpleName();
 
     public static final String ARG_DEVICE_KEY = "device-key";
+    public static final String ARG_GROUP_KEY = "group-key";
 
     private OnContactSelectedListener mListener;
     private DatabaseReference mDatabaseIntercomContacts;
@@ -32,18 +33,20 @@ public class IntercomFragment extends Fragment {
     private LinearLayoutManager mManager;
 
     private String mDeviceKey;
+    private String mGroupKey;
 
-    public static IntercomFragment newInstance(String deviceKey) {
+    public static IntercomContactsFragment newInstance(String deviceKey, String groupKey) {
         Bundle args = new Bundle();
         args.putString(ARG_DEVICE_KEY, deviceKey);
+        args.putString(ARG_GROUP_KEY, groupKey);
 
-        IntercomFragment fragment = new IntercomFragment();
+        IntercomContactsFragment fragment = new IntercomContactsFragment();
         fragment.setArguments(args);
 
         return fragment;
     }
 
-    public IntercomFragment() {
+    public IntercomContactsFragment() {
     }
 
     @Override
@@ -54,9 +57,11 @@ public class IntercomFragment extends Fragment {
             Bundle args = getArguments();
 
             mDeviceKey = args.getString(ARG_DEVICE_KEY);
+            mGroupKey = args.getString(ARG_GROUP_KEY);
         }
         else {
             mDeviceKey = savedInstanceState.getString(ARG_DEVICE_KEY);
+            mGroupKey = savedInstanceState.getString(ARG_GROUP_KEY);
         }
     }
 
@@ -80,7 +85,7 @@ public class IntercomFragment extends Fragment {
         mManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mManager);
 
-        Query contactQuery = mDatabaseIntercomContacts.child("1").orderByChild(Firebase.PROPERTY_NAME);
+        Query contactQuery = mDatabaseIntercomContacts.child(mGroupKey).orderByChild(Firebase.PROPERTY_NAME);
 
         // Removed in onDestroy()
         mAdapter = new MyFirebaseRecyclerAdapter<Contact, ContactViewHolder>(Contact.class, R.layout.contact_item, ContactViewHolder.class, contactQuery) {
@@ -106,6 +111,7 @@ public class IntercomFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putString(ARG_DEVICE_KEY, mDeviceKey);
+        outState.putString(ARG_GROUP_KEY, mGroupKey);
         super.onSaveInstanceState(outState);
     }
 

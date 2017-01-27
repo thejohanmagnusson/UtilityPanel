@@ -3,7 +3,7 @@ package android.johanmagnusson.se.utilitypanel;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
-import static android.johanmagnusson.se.utilitypanel.IntercomFragment.ARG_DEVICE_KEY;
+import static android.johanmagnusson.se.utilitypanel.IntercomContactsFragment.ARG_DEVICE_KEY;
 
 public class AccessCodeFragment extends Fragment {
 
